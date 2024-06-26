@@ -26,7 +26,7 @@ public class FormatterReciever extends AbstractBehavior<FormatterCont.Message> {
     }
 
     private Behavior<FormatterCont.Message> onExampleMessage(FormatterCont.Calc msg) {
-        getContext().getLog().info("Expression: {}",msg.val());
+        getContext().getLog().info("Got: {}",msg.val());
         return this;
     }
 }

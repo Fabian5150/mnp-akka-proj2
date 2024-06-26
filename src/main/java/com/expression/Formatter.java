@@ -15,7 +15,7 @@ import akka.actor.typed.javadsl.Receive;
 
 
 public class Formatter extends AbstractBehavior<Formatter.Message> {
-    public record Message(ActorRef<FormatterCont.Message> cust, Expression expr) {}
+    public record Message(ActorRef<FormatterCont.Message> cust, Expression expr, FormatterCont.LeftOrRight pos) {}
 
     private record SubExpressionInfo(Expression left, Expression right, String operation){}
     public static Behavior<Formatter.Message> create()
@@ -47,14 +47,17 @@ public class Formatter extends AbstractBehavior<Formatter.Message> {
         if(msg.expr instanceof  Expression.Val)
         {
             String  value = String.valueOf( ((Expression.Val)msg.expr).inner() );
-            msg.cust.tell(new FormatterCont.Calc(value));
+            msg.cust.tell(new FormatterCont.Calc(value, msg.pos));
             return this ;
         }
         var info = GetOperationFromExpression(msg.expr);
         ActorRef<FormatterCont.Message> cont= this.getContext().spawnAnonymous(
-                FormatterCont.create(null, info.operation, msg.cust));
-        this.getContext().getSelf().tell(new Formatter.Message(cont, info.left));
-        this.getContext().getSelf().tell(new Formatter.Message(cont, info.right));
+                FormatterCont.create(null, info.operation, msg.cust, msg.pos));
+        //As the two formatting doesnt depend on each other, the smallest expression would be done first
+        // And sent to continuation. Continuation can thus never make sure that what it first gets is actually the
+        //left expression.
+        this.getContext().getSelf().tell(new Formatter.Message(cont, info.left, FormatterCont.LeftOrRight.Left ));
+        this.getContext().getSelf().tell(new Formatter.Message(cont,info.right,  FormatterCont.LeftOrRight.Right));
 
         return this;
     }

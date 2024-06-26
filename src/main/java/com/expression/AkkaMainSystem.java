@@ -30,10 +30,12 @@ public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Message> {
 
         //a.tell(new ExampleActor.ExampleMessage(this.getContext().getSelf(),"Test123"));
         var expr = Expression.generateExpression(5,6);
+
+
         var formatterReciever = getContext().spawnAnonymous(FormatterReciever.create());
         var formatter = getContext().spawnAnonymous(Formatter.create());
-        formatter.tell(new Formatter.Message(formatterReciever, expr));
-        getContext().getLog().info("Actual Value : {}", expr.toString());
+        formatter.tell(new Formatter.Message(formatterReciever, expr, FormatterCont.LeftOrRight.Left));
+        getContext().getLog().info(" Expected: {}", expr.toString());
         return this;
     }
 }
