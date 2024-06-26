@@ -4,25 +4,25 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 
-public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Create> {
+public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Message> {
 
-    public static class Create {
-    }
+    public interface Message{};
+    public static class Create implements Message {}
 
-    public static Behavior<Create> create() {
+    public static Behavior<Message> create() {
         return Behaviors.setup(AkkaMainSystem::new);
     }
 
-    private AkkaMainSystem(ActorContext<Create> context) {
+    private AkkaMainSystem(ActorContext<Message> context) {
         super(context);
     }
 
     @Override
-    public Receive<Create> createReceive() {
-        return newReceiveBuilder().onMessage(Create.class, this::onCreate).build();
+    public Receive<Message> createReceive() {
+        return newReceiveBuilder().onMessage(Message.class, this::onCreate).build();
     }
 
-    private Behavior<Create> onCreate(Create command) {
+    private Behavior<Message> onCreate(Message command) {
         //#create-actors
         ActorRef<ExampleActor.Message> a = this.getContext().spawn(ExampleActor.create("Alice"), "alice");
         ActorRef<ExampleTimerActor.Message> b = this.getContext().spawn(ExampleTimerActor.create(), "timeractor");

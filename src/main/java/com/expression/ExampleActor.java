@@ -8,7 +8,7 @@ public class ExampleActor extends AbstractBehavior<ExampleActor.Message> {
 
     public interface Message {};
 
-    public record ExampleMessage(ActorRef<AkkaMainSystem.Create> someReference, String someString) implements Message {  }
+    public record ExampleMessage(ActorRef<AkkaMainSystem.Message> someReference, String someString) implements Message {  }
 
     public static Behavior<Message> create(String name) {
         return Behaviors.setup(context -> new ExampleActor(context, name));
