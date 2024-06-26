@@ -47,7 +47,7 @@ public class Formatter extends AbstractBehavior<Formatter.Message> {
         if(msg.expr instanceof  Expression.Val)
         {
             String  value = String.valueOf( ((Expression.Val)msg.expr).inner() );
-            msg.cust.tell(new FormatterCont.Message(value));
+            msg.cust.tell(new FormatterCont.Calc(value));
         }
         var info = GetOperationFromExpression(msg.expr);
         ActorRef<FormatterCont.Message> cont= this.getContext().spawnAnonymous(

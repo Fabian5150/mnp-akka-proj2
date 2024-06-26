@@ -8,8 +8,8 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
 public class FormatterCont extends AbstractBehavior<FormatterCont.Message> {
-    //public interface Message {};
-    public record Message(/*ActorRef<FormatterCont.Message> cust,*/ String val) {}
+    public interface Message {};
+    public record Calc(/*ActorRef<FormatterCont.Message> cust,*/ String val) implements Message {}
 
 
 
@@ -31,17 +31,17 @@ public class FormatterCont extends AbstractBehavior<FormatterCont.Message> {
     @Override
     public Receive<FormatterCont.Message> createReceive() {
         return newReceiveBuilder()
-                .onMessage(Message.class, this::onMessage)
+                .onMessage(Calc.class, this::onCalc)
                 .build();
     }
 
-    private Behavior<FormatterCont.Message> onMessage(FormatterCont.Message msg)
+    private Behavior<FormatterCont.Message> onCalc(FormatterCont.Calc msg)
     {
         if(firstString==null)
             return FormatterCont.create(msg.val, this.operation, this.cust);
         else
         {
-            this.cust.tell(new Message(firstString+" "+this.operation+" "+msg.val));
+            this.cust.tell(new Calc(firstString+" "+this.operation+" "+msg.val));
 
             return this;
         }
