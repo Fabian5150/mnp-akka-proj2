@@ -41,7 +41,7 @@ public class FormatterCont extends AbstractBehavior<FormatterCont.Message> {
             return FormatterCont.create(msg.val, this.operation, this.cust);
         else
         {
-            this.cust.tell(new Calc(firstString+" "+this.operation+" "+msg.val));
+            this.cust.tell(new Calc("("+firstString+this.operation+msg.val+")"));
 
             return this;
         }
