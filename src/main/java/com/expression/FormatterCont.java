@@ -9,7 +9,7 @@ import akka.actor.typed.javadsl.Receive;
 
 public class FormatterCont extends AbstractBehavior<FormatterCont.Message> {
     public interface Message {};
-    public record Calc(/*ActorRef<FormatterCont.Message> cust,*/ String val) implements Message {}
+    public record Calc(/*ActorRef<FormatterCont.Message> cust,*/ String val) implements Message, AkkaMainSystem.Message {}
 
 
 

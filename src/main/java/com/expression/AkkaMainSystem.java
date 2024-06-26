@@ -6,7 +6,7 @@ import akka.actor.typed.javadsl.*;
 
 public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Message> {
 
-    public interface Message{};
+    public interface Message {};
     public static class Create implements Message {}
 
     public static Behavior<Message> create() {
@@ -24,11 +24,15 @@ public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Message> {
 
     private Behavior<Message> onCreate(Message command) {
         //#create-actors
-        ActorRef<ExampleActor.Message> a = this.getContext().spawn(ExampleActor.create("Alice"), "alice");
-        ActorRef<ExampleTimerActor.Message> b = this.getContext().spawn(ExampleTimerActor.create(), "timeractor");
+        //ActorRef<ExampleActor.Message> a = this.getContext().spawn(ExampleActor.create("Alice"), "alice");
+        //ActorRef<ExampleTimerActor.Message> b = this.getContext().spawn(ExampleTimerActor.create(), "timeractor");
         //#create-actors
 
-        a.tell(new ExampleActor.ExampleMessage(this.getContext().getSelf(),"Test123"));
+        //a.tell(new ExampleActor.ExampleMessage(this.getContext().getSelf(),"Test123"));
+        var expr = Expression.generateExpression(5,6);
+        var formatterReciever = getContext().spawnAnonymous(FormatterReciever.create());
+        var formatter = getContext().spawnAnonymous(Formatter.create());
+        //formatter.tell(new Formatter.Message(formatterReciever, expr));
         return this;
     }
 }
