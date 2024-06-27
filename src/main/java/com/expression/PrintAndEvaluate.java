@@ -1,20 +1,19 @@
 package com.expression;
 
-import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 
-public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Message> {
+public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message> {
 
     public interface Message {};
     public static class Create implements Message {}
     public static record FormatterResult(String res) implements Message {}
 
     public static Behavior<Message> create() {
-        return Behaviors.setup(AkkaMainSystem::new);
+        return Behaviors.setup(PrintAndEvaluate::new);
     }
 
-    private AkkaMainSystem(ActorContext<Message> context) {
+    private PrintAndEvaluate(ActorContext<Message> context) {
         super(context);
     }
 

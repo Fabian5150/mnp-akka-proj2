@@ -9,13 +9,13 @@ import akka.actor.typed.javadsl.Receive;
 
 public class FormatterReciever extends AbstractBehavior<FormatterCont.Message> {
 
-    private final ActorRef<AkkaMainSystem.Message> mainSystem;
-    public static Behavior<FormatterCont.Message> create(ActorRef<AkkaMainSystem.Message> main) {
+    private final ActorRef<PrintAndEvaluate.Message> mainSystem;
+    public static Behavior<FormatterCont.Message> create(ActorRef<PrintAndEvaluate.Message> main) {
         return Behaviors.setup(context -> new FormatterReciever(context, main));
     }
 
 
-    private FormatterReciever(ActorContext<FormatterCont.Message> context, ActorRef<AkkaMainSystem.Message> main) {
+    private FormatterReciever(ActorContext<FormatterCont.Message> context, ActorRef<PrintAndEvaluate.Message> main) {
         super(context);
         this.mainSystem=main;
     }
@@ -29,7 +29,7 @@ public class FormatterReciever extends AbstractBehavior<FormatterCont.Message> {
 
     private Behavior<FormatterCont.Message> onExampleMessage(FormatterCont.Calc msg) {
         //getContext().getLog().info("Got: {}",msg.val());
-        this.mainSystem.tell(new AkkaMainSystem.FormatterResult(msg.val()));
+        this.mainSystem.tell(new PrintAndEvaluate.FormatterResult(msg.val()));
         return this;
     }
 }

@@ -5,9 +5,9 @@ import akka.actor.typed.ActorSystem;
 import java.io.IOException;
 public class AkkaStart {
   public static void main(String[] args) {
-    final ActorSystem<AkkaMainSystem.Message> messageMain = ActorSystem.create(AkkaMainSystem.create(), "akkaMainSystem");
+    final ActorSystem<PrintAndEvaluate.Message> messageMain = ActorSystem.create(PrintAndEvaluate.create(), "akkaMainSystem");
 
-    messageMain.tell(new AkkaMainSystem.Create());
+    messageMain.tell(new PrintAndEvaluate.Create());
 
     try {
       System.out.println(">>> Press ENTER to exit <<<");

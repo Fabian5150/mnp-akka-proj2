@@ -16,7 +16,7 @@ public class FormatterCont extends AbstractBehavior<FormatterCont.Message> {
         Left,
         Right
     }
-    public record Calc(String val, LeftOrRight pos) implements Message, AkkaMainSystem.Message {}
+    public record Calc(String val, LeftOrRight pos) implements Message, PrintAndEvaluate.Message {}
 
 
 
