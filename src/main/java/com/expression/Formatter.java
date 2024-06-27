@@ -57,7 +57,10 @@ public class Formatter extends AbstractBehavior<Formatter.Message> {
         // And sent to continuation. Continuation can thus never make sure that what it first gets is actually the
         //left expression.
         this.getContext().getSelf().tell(new Formatter.Message(cont, info.left, FormatterCont.LeftOrRight.Left ));
-        this.getContext().getSelf().tell(new Formatter.Message(cont,info.right,  FormatterCont.LeftOrRight.Right));
+        getContext().spawnAnonymous(Formatter.create()).tell
+                (new Formatter.Message(cont, info.right, FormatterCont.LeftOrRight.Right));
+
+        //this.getContext().getSelf().tell(new Formatter.Message(cont,info.right,  FormatterCont.LeftOrRight.Right));
 
         return this;
     }
