@@ -8,6 +8,7 @@ public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Message> {
 
     public interface Message {};
     public static class Create implements Message {}
+    public static record FormatterResult(String res) implements Message {}
 
     public static Behavior<Message> create() {
         return Behaviors.setup(AkkaMainSystem::new);
@@ -19,7 +20,9 @@ public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Message> {
 
     @Override
     public Receive<Message> createReceive() {
-        return newReceiveBuilder().onMessage(Message.class, this::onCreate).build();
+        return newReceiveBuilder().onMessage(FormatterResult.class,this::onFormatterResult)
+                .onMessage(Message.class, this::onCreate)
+                .build();
     }
 
     private Behavior<Message> onCreate(Message command) {
@@ -32,10 +35,15 @@ public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Message> {
         var expr = Expression.generateExpression(5,6);
 
 
-        var formatterReciever = getContext().spawnAnonymous(FormatterReciever.create());
+        var formatterReciever = getContext().spawnAnonymous(FormatterReciever.create(getContext().getSelf()));
         var formatter = getContext().spawnAnonymous(Formatter.create());
         formatter.tell(new Formatter.Message(formatterReciever, expr, FormatterCont.LeftOrRight.Left));
         getContext().getLog().info(" Expected: {}", expr.toString());
+        return this;
+    }
+    private Behavior<Message> onFormatterResult( FormatterResult res)
+    {
+        getContext().getLog().info("End result of the formatter: {}", res.res);
         return this;
     }
 }
