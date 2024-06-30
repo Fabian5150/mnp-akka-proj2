@@ -10,6 +10,7 @@ import akka.actor.typed.javadsl.Receive;
 public class FormatterReciever extends AbstractBehavior<FormatterCont.Message> {
 
     private final ActorRef<PrintAndEvaluate.Message> mainSystem;
+
     public static Behavior<FormatterCont.Message> create(ActorRef<PrintAndEvaluate.Message> main) {
         return Behaviors.setup(context -> new FormatterReciever(context, main));
     }
@@ -17,7 +18,7 @@ public class FormatterReciever extends AbstractBehavior<FormatterCont.Message> {
 
     private FormatterReciever(ActorContext<FormatterCont.Message> context, ActorRef<PrintAndEvaluate.Message> main) {
         super(context);
-        this.mainSystem=main;
+        this.mainSystem = main;
     }
 
     @Override

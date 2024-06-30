@@ -5,9 +5,16 @@ import akka.actor.typed.javadsl.*;
 
 public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message> {
 
-    public interface Message {};
-    public static class Create implements Message {}
-    public static record FormatterResult(String res) implements Message {}
+    public interface Message {
+    }
+
+    ;
+
+    public static class Create implements Message {
+    }
+
+    public static record FormatterResult(String res) implements Message {
+    }
 
     public static Behavior<Message> create() {
         return Behaviors.setup(PrintAndEvaluate::new);
@@ -19,7 +26,7 @@ public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message>
 
     @Override
     public Receive<Message> createReceive() {
-        return newReceiveBuilder().onMessage(FormatterResult.class,this::onFormatterResult)
+        return newReceiveBuilder().onMessage(FormatterResult.class, this::onFormatterResult)
                 .onMessage(Message.class, this::onCreate)
                 .build();
     }
@@ -31,7 +38,7 @@ public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message>
         //#create-actors
 
         //a.tell(new ExampleActor.ExampleMessage(this.getContext().getSelf(),"Test123"));
-        var expr = Expression.generateExpression(5,6);
+        var expr = Expression.generateExpression(6, 9);
 
 
         var formatterReciever = getContext().spawnAnonymous(FormatterReciever.create(getContext().getSelf()));
@@ -40,8 +47,8 @@ public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message>
         getContext().getLog().info(" Expected: {}", expr.toString());
         return this;
     }
-    private Behavior<Message> onFormatterResult( FormatterResult res)
-    {
+
+    private Behavior<Message> onFormatterResult(FormatterResult res) {
         getContext().getLog().info("End result of the formatter: {}", res.res);
         return this;
     }
