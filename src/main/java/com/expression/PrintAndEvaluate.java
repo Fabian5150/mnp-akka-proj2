@@ -6,14 +6,15 @@ import akka.actor.typed.javadsl.*;
 public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message> {
 
     public interface Message {
-    }
-
-    ;
+    };
 
     public static class Create implements Message {
     }
 
     public static record FormatterResult(String res) implements Message {
+    }
+
+    public static record EvaluatorResult(int res) implements Message {
     }
 
     public static Behavior<Message> create() {
@@ -26,7 +27,9 @@ public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message>
 
     @Override
     public Receive<Message> createReceive() {
-        return newReceiveBuilder().onMessage(FormatterResult.class, this::onFormatterResult)
+        return newReceiveBuilder()
+                .onMessage(FormatterResult.class, this::onFormatterResult)
+                .onMessage(EvaluatorResult.class, this::onEvalutorResult)
                 .onMessage(Message.class, this::onCreate)
                 .build();
     }
@@ -44,12 +47,23 @@ public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message>
         var formatterReciever = getContext().spawnAnonymous(FormatterReciever.create(getContext().getSelf()));
         var formatter = getContext().spawnAnonymous(Formatter.create());
         formatter.tell(new Formatter.Message(formatterReciever, expr, FormatterCont.LeftOrRight.Left));
-        getContext().getLog().info(" Expected: {}", expr.toString());
+
+        //Erstelle den Ur-Evaluator. Er erhält eine Referenz auf diesen Actor und die Expression bei seiner Erstellung
+        //Er ist der Actor, der am Ende das Ergebnis an PrintAndEvaluate übergibt.
+        getContext().spawnAnonymous(Evaluator.create(getContext().getSelf(), expr));
+
+        getContext().getLog().info(" String expected: {}", expr.toString());
+        getContext().getLog().info(" Evaluation expected: {}", expr.eval());
         return this;
     }
 
     private Behavior<Message> onFormatterResult(FormatterResult res) {
         getContext().getLog().info("End result of the formatter: {}", res.res);
+        return this;
+    }
+
+    private Behavior<Message> onEvalutorResult(EvaluatorResult res){
+        getContext().getLog().info("End result of the evalutor: {}", res.res);
         return this;
     }
 }

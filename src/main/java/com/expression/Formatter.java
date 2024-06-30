@@ -48,7 +48,8 @@ public class Formatter extends AbstractBehavior<Formatter.Message> {
         }
         var info = GetOperationFromExpression(msg.expr);
         ActorRef<FormatterCont.Message> cont = this.getContext().spawnAnonymous(
-                FormatterCont.create(null, info.operation, msg.cust, msg.pos));
+                FormatterCont.create(null, info.operation, msg.cust, msg.pos)
+        );
         //As the two formatting doesnt depend on each other, the smallest expression would be done first
         // And sent to continuation. Continuation can thus never make sure that what it first gets is actually the
         //left expression.
