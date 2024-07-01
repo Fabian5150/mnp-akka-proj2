@@ -34,7 +34,7 @@ public class Evaluator extends AbstractBehavior<Evaluator.Message> {
     ActorRef<Evaluator.Message> cust;
     Expression expr;
 
-    // myPosition == ROOT => Actor, an den zurückgesendet wird, ist PrintAndEvaluate
+    //myPosition == ROOT => Actor, an den zurückgesendet wird, ist PrintAndEvaluate
     position myPosition;
     operation myOperation;
 
@@ -101,8 +101,6 @@ public class Evaluator extends AbstractBehavior<Evaluator.Message> {
     * Ermittelt, ob Parent PrintAndEvaluate oder ein anderer Evaluator ist und sendet dementsprechend die richtige Nachricht
     * */
     private void sendEvaluatorResult(int res){
-        //getContext().getLog().info("I'll be sendin' somethin': {} {}", res, myPosition);
-
         if(myPosition == position.ROOT){
             root.tell(new PrintAndEvaluate.EvaluatorResult(res));
         } else {
@@ -117,12 +115,10 @@ public class Evaluator extends AbstractBehavior<Evaluator.Message> {
             rightEval = child.res;
         }
 
-        //getContext().getLog().info("I got a little somethin': {} {}", child.res, child.myPosition);
         // Die tatsächliche Berechnung, wenn beide Ergebnisse erhalten wurden
         if(leftEval != null && rightEval != null){
             //sleep for 1 sec...
 
-            //getContext().getLog().info("Doin' some calulatin':{} {} {}",leftEval, myOperation, rightEval);
             int res = 0;
             switch (myOperation){
                 case ADD -> res = leftEval + rightEval;
