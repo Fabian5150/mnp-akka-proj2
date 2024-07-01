@@ -52,15 +52,14 @@ public class Evaluator extends AbstractBehavior<Evaluator.Message> {
         super(context);
         this.expr = expr;
 
-        if(myPosition == position.ROOT) this.root = root;
+        if(root != null) this.root = root;
+        if(cust != null) this.cust = cust;
+        this.myPosition = myPosition;
 
         if(expr instanceof Expression.Val){
             sendEvaluatorResult(((Expression.Val) expr).inner());
             return;
         }
-
-        this.cust = cust;
-        this.myPosition = myPosition;
 
         createChildActors(expr);
     }
@@ -102,6 +101,8 @@ public class Evaluator extends AbstractBehavior<Evaluator.Message> {
     * Ermittelt, ob Parent PrintAndEvaluate oder ein anderer Evaluator ist und sendet dementsprechend die richtige Nachricht
     * */
     private void sendEvaluatorResult(int res){
+        //getContext().getLog().info("I'll be sendin' somethin': {} {}", res, myPosition);
+
         if(myPosition == position.ROOT){
             root.tell(new PrintAndEvaluate.EvaluatorResult(res));
         } else {
@@ -116,10 +117,12 @@ public class Evaluator extends AbstractBehavior<Evaluator.Message> {
             rightEval = child.res;
         }
 
+        //getContext().getLog().info("I got a little somethin': {} {}", child.res, child.myPosition);
         // Die tatsächliche Berechnung, wenn beide Ergebnisse erhalten wurden
         if(leftEval != null && rightEval != null){
             //sleep for 1 sec...
 
+            //getContext().getLog().info("Doin' some calulatin':{} {} {}",leftEval, myOperation, rightEval);
             int res = 0;
             switch (myOperation){
                 case ADD -> res = leftEval + rightEval;

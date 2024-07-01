@@ -6,7 +6,7 @@ import akka.actor.typed.javadsl.*;
 public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message> {
 
     public interface Message {
-    };
+    }
 
     public static class Create implements Message {
     }
@@ -35,12 +35,6 @@ public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message>
     }
 
     private Behavior<Message> onCreate(Message command) {
-        //#create-actors
-        //ActorRef<ExampleActor.Message> a = this.getContext().spawn(ExampleActor.create("Alice"), "alice");
-        //ActorRef<ExampleTimerActor.Message> b = this.getContext().spawn(ExampleTimerActor.create(), "timeractor");
-        //#create-actors
-
-        //a.tell(new ExampleActor.ExampleMessage(this.getContext().getSelf(),"Test123"));
         var expr = Expression.generateExpression(6, 9);
 
         var formatterReciever = getContext().spawnAnonymous(FormatterReciever.create(getContext().getSelf()));
@@ -62,7 +56,7 @@ public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message>
     }
 
     private Behavior<Message> onEvalutorResult(EvaluatorResult res){
-        getContext().getLog().info("End result of the evalutor: {}", res.res);
+        getContext().getLog().info("End result of the evaluator: {}", res.res);
         return this;
     }
 }
