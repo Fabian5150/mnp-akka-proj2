@@ -43,14 +43,13 @@ public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message>
         //a.tell(new ExampleActor.ExampleMessage(this.getContext().getSelf(),"Test123"));
         var expr = Expression.generateExpression(6, 9);
 
-
         var formatterReciever = getContext().spawnAnonymous(FormatterReciever.create(getContext().getSelf()));
         var formatter = getContext().spawnAnonymous(Formatter.create());
         formatter.tell(new Formatter.Message(formatterReciever, expr, FormatterCont.LeftOrRight.Left));
 
         //Erstelle den Ur-Evaluator. Er erhält eine Referenz auf diesen Actor und die Expression bei seiner Erstellung
         //Er ist der Actor, der am Ende das Ergebnis an PrintAndEvaluate übergibt.
-        getContext().spawnAnonymous(Evaluator.create(getContext().getSelf(), expr));
+        getContext().spawnAnonymous(Evaluator.create(getContext().getSelf(), null, expr));
 
         getContext().getLog().info(" String expected: {}", expr.toString());
         getContext().getLog().info(" Evaluation expected: {}", expr.eval());
