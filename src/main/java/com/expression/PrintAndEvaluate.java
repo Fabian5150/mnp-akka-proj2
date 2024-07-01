@@ -49,7 +49,7 @@ public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message>
 
         //Erstelle den Ur-Evaluator. Er erhält eine Referenz auf diesen Actor und die Expression bei seiner Erstellung
         //Er ist der Actor, der am Ende das Ergebnis an PrintAndEvaluate übergibt.
-        getContext().spawnAnonymous(Evaluator.create(getContext().getSelf(), null, expr));
+        getContext().spawnAnonymous(Evaluator.create(getContext().getSelf(), null, expr, Evaluator.position.ROOT));
 
         getContext().getLog().info(" String expected: {}", expr.toString());
         getContext().getLog().info(" Evaluation expected: {}", expr.eval());

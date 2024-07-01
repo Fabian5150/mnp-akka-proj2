@@ -4,20 +4,29 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 
-import java.sql.Array;
-
-
 public class Evaluator extends AbstractBehavior<Evaluator.Message> {
+    public enum position {
+        LEFT,
+        RIGHT,
+        ROOT
+    }
+
+    public enum operation {
+        ADD,
+        SUB,
+        MUL
+    }
 
     public interface Message {
     }
 
-    public static record EvaluatorResult(int res) implements Message {
+    public static record EvaluatorResult(int res, position myPosition) implements Message {
     }
 
-    public static Behavior<Message> create(ActorRef<PrintAndEvaluate.Message> root, ActorRef<Evaluator.Message> cust, Expression expr) {
-        return Behaviors.setup(context -> new Evaluator(context, root, cust, expr));
+    public static Behavior<Message> create(ActorRef<PrintAndEvaluate.Message> root, ActorRef<Evaluator.Message> cust, Expression expr, position myPosition) {
+        return Behaviors.setup(context -> new Evaluator(context, root, cust, expr, myPosition));
     }
+
 
     //Wird später nur initialisiert, wenn diese Evaluatorinstanz von PrintAndEvaluate erzeugt wurde
     ActorRef<PrintAndEvaluate.Message> root;
@@ -25,68 +34,102 @@ public class Evaluator extends AbstractBehavior<Evaluator.Message> {
     ActorRef<Evaluator.Message> cust;
     Expression expr;
 
-    //Referenzen auf die beiden erzeugten Childaktoren (falls welche erzeugt werden)
-    ActorRef<Message> leftChild;
-    ActorRef<Message> rightChild;
+    // myPosition == ROOT => Actor, an den zurückgesendet wird, ist PrintAndEvaluate
+    position myPosition;
+    operation myOperation;
 
-    private Evaluator(ActorContext<Message> context, ActorRef<PrintAndEvaluate.Message> root, ActorRef<Evaluator.Message> cust , Expression expr) {
+    //Felder für die später erhaltenen ausgewerteten Ausdrücke
+    Integer leftEval;
+    Integer rightEval;
+
+    private Evaluator(
+            ActorContext<Message> context,
+            ActorRef<PrintAndEvaluate.Message> root,
+            ActorRef<Evaluator.Message> cust,
+            Expression expr,
+            position myPosition
+        ) {
         super(context);
         this.expr = expr;
 
-        if (!(expr instanceof Expression.Val)) {
-            var childExpressions = childExpressions(expr);
+        if(myPosition == position.ROOT) this.root = root;
 
-            leftChild = getContext().spawnAnonymous(Evaluator.create(null, getContext().getSelf(), childExpressions[0]));
-            rightChild = getContext().spawnAnonymous(Evaluator.create(null, getContext().getSelf(), childExpressions[1]));
+        if(expr instanceof Expression.Val){
+            sendEvaluatorResult(((Expression.Val) expr).inner());
+            return;
         }
 
-        //Kümmert sich um weitere Anweisungen, falls die Parent Actor 'Node' PrintAndEvaluate ist
-        if(root != null) {
-            this.root = root;
+        this.cust = cust;
+        this.myPosition = myPosition;
 
-            if (expr instanceof Expression.Val) {
-                root.tell(new PrintAndEvaluate.EvaluatorResult(((Expression.Val) expr).inner()));
-            }
-        };
-
-        //Kümmert sich um weitere Anweisungen, falls die Parent Actor 'Node' ein anderer Evaluator ist
-        if(cust != null) {
-            this.cust = cust;
-
-            if (expr instanceof Expression.Val) {
-                cust.tell(new Evaluator.EvaluatorResult(((Expression.Val) expr).inner()));
-            }
-        };
+        createChildActors(expr);
     }
 
-    private Expression[] childExpressions(Expression parent){
-        if(expr instanceof Expression.Val) throw new RuntimeException("Here only non primitive Expression! ");
+    /*
+    * Erzeugt zwei Childaktoren, falls der erhaltene Ausdruck Add, Mul oder Sub ist
+    * */
+    private void createChildActors(Expression parent){
+        if (parent instanceof Expression.Val) throw new RuntimeException("Here only non primitive Expression!");
 
         Expression[] res = new Expression[2];
 
-        if (expr instanceof Expression.Add) {
-            res[0] = ((Expression.Add) expr).left();
-            res[1] = ((Expression.Add) expr).right();
-        } else if(expr instanceof Expression.Mul){
-            res[0] = ((Expression.Mul) expr).left();
-            res[1] = ((Expression.Mul) expr).right();
-        } else if(expr instanceof Expression.Sub){
-            res[0] = ((Expression.Sub) expr).left();
-            res[1] = ((Expression.Sub) expr).right();
+        if (parent instanceof Expression.Add) {
+            myOperation = operation.ADD;
+            res[0] = ((Expression.Add) parent).left();
+            res[1] = ((Expression.Add) parent).right();
+        } else if (parent instanceof Expression.Mul) {
+            myOperation = operation.MUL;
+            res[0] = ((Expression.Mul) parent).left();
+            res[1] = ((Expression.Mul) parent).right();
+        } else {
+            myOperation = operation.SUB;
+            res[0] = ((Expression.Sub) parent).left();
+            res[1] = ((Expression.Sub) parent).right();
         }
 
-        return res;
+        getContext().spawnAnonymous(Evaluator.create(null, getContext().getSelf(), res[0], position.LEFT));
+        getContext().spawnAnonymous(Evaluator.create(null, getContext().getSelf(), res[1], position.RIGHT));
     }
 
     @Override
     public Receive<Message> createReceive() {
         return newReceiveBuilder()
-                .onMessage(Message.class, this::onExpression)
+                .onMessage(EvaluatorResult.class, this::onChildResult)
                 .build();
     }
 
-    private Behavior<Message> onExpression(Message msg) {
-        getContext().getLog().info("");
+    /*
+    * Ermittelt, ob Parent PrintAndEvaluate oder ein anderer Evaluator ist und sendet dementsprechend die richtige Nachricht
+    * */
+    private void sendEvaluatorResult(int res){
+        if(myPosition == position.ROOT){
+            root.tell(new PrintAndEvaluate.EvaluatorResult(res));
+        } else {
+            cust.tell(new Evaluator.EvaluatorResult(res, myPosition));
+        }
+    }
+
+    private Behavior<Message> onChildResult(EvaluatorResult child) {
+        if(child.myPosition == position.LEFT){
+            leftEval = child.res;
+        } else {
+            rightEval = child.res;
+        }
+
+        // Die tatsächliche Berechnung, wenn beide Ergebnisse erhalten wurden
+        if(leftEval != null && rightEval != null){
+            //sleep for 1 sec...
+
+            int res = 0;
+            switch (myOperation){
+                case ADD -> res = leftEval + rightEval;
+                case MUL -> res = leftEval * rightEval;
+                case SUB -> res = leftEval - rightEval;
+            }
+
+            sendEvaluatorResult(res);
+        }
+
         return this;
     }
 }
