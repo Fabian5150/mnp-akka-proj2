@@ -17,6 +17,9 @@ public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message>
     public static record EvaluatorResult(int res) implements Message {
     }
 
+    // Nur zum Testen der Auswertungszeit
+    // private long rootEvaluatorTime;
+
     public static Behavior<Message> create() {
         return Behaviors.setup(PrintAndEvaluate::new);
     }
@@ -41,12 +44,18 @@ public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message>
         var formatter = getContext().spawnAnonymous(Formatter.create());
         formatter.tell(new Formatter.Message(formatterReciever, expr, FormatterCont.LeftOrRight.Left));
 
-        //Erstelle den Ur-Evaluator. Er erhält eine Referenz auf diesen Actor und die Expression bei seiner Erstellung
-        //Er ist der Actor, der am Ende das Ergebnis an PrintAndEvaluate übergibt.
+        // Erstellt den "Ur-Evaluator". Er erhält eine Referenz auf PrintAndEvaluate und
+        // die Expression bei seiner Erstellung
+        // Er ist der Actor, der am Ende das Ergebnis an PrintAndEvaluate übergibt.
+        // rootEvaluatorTime = System.currentTimeMillis(); //Nur zum Testen der
+        // Auswertungszeit
         getContext().spawnAnonymous(Evaluator.create(getContext().getSelf(), null, expr, Evaluator.position.ROOT));
 
-        getContext().getLog().info(" String expected: {}", expr.toString());
-        getContext().getLog().info(" Evaluation expected: {}", expr.eval());
+        /*
+         * getContext().getLog().info("String expected: {}", expr.toString());
+         * getContext().getLog().info("Evaluation expected: {}", expr.eval());
+         * getContext().getLog().info("Expected Runtime: {} seconds", expr.runtime());
+         */
         return this;
     }
 
@@ -55,8 +64,16 @@ public class PrintAndEvaluate extends AbstractBehavior<PrintAndEvaluate.Message>
         return this;
     }
 
-    private Behavior<Message> onEvalutorResult(EvaluatorResult res){
+    private Behavior<Message> onEvalutorResult(EvaluatorResult res) {
         getContext().getLog().info("End result of the evaluator: {}", res.res);
+
+        /*
+         * //Nur zum Testen der Auswertungszeit
+         * long now = System.currentTimeMillis();
+         * getContext().getLog().info("Actual Evaluation time: {} seconds",(now -
+         * rootEvaluatorTime)/1000);
+         */
+
         return this;
     }
 }

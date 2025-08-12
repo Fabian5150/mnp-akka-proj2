@@ -4,6 +4,8 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 
+import java.time.Duration;
+
 public class Evaluator extends AbstractBehavior<Evaluator.Message> {
     public enum position {
         LEFT,
@@ -11,7 +13,7 @@ public class Evaluator extends AbstractBehavior<Evaluator.Message> {
         ROOT
     }
 
-    public enum operation {
+    private enum operation {
         ADD,
         SUB,
         MUL
@@ -23,40 +25,51 @@ public class Evaluator extends AbstractBehavior<Evaluator.Message> {
     public static record EvaluatorResult(int res, position myPosition) implements Message {
     }
 
-    public static Behavior<Message> create(ActorRef<PrintAndEvaluate.Message> root, ActorRef<Evaluator.Message> cust, Expression expr, position myPosition) {
-        return Behaviors.setup(context -> new Evaluator(context, root, cust, expr, myPosition));
+    public static record TimedMessage(int res) implements Message {
     }
 
+    public static Behavior<Message> create(ActorRef<PrintAndEvaluate.Message> root, ActorRef<Evaluator.Message> cust,
+            Expression expr, position myPosition) {
+        return Behaviors.setup(context -> Behaviors
+                .withTimers(timers -> new Evaluator(context, timers, root, cust, expr, myPosition)));
+    }
 
-    //Wird später nur initialisiert, wenn diese Evaluatorinstanz von PrintAndEvaluate erzeugt wurde
+    // Wird später nur initialisiert, wenn diese Evaluatorinstanz von
+    // PrintAndEvaluate erzeugt wurde
     ActorRef<PrintAndEvaluate.Message> root;
-    //Wird später nur initialisiert, wenn diese Evaluatorinstanz von einem anderen Evaluator erzeugt wurde
+    // Wird später nur initialisiert, wenn diese Evaluatorinstanz von einem anderen
+    // Evaluator erzeugt wurde
     ActorRef<Evaluator.Message> cust;
     Expression expr;
 
-    //myPosition == ROOT => Actor, an den zurückgesendet wird, ist PrintAndEvaluate
+    // myPosition == ROOT => Actor, an den zurückgesendet wird, ist PrintAndEvaluate
     position myPosition;
     operation myOperation;
 
-    //Felder für die später erhaltenen ausgewerteten Ausdrücke
+    // Felder für die später erhaltenen ausgewerteten Ausdrücke
     Integer leftEval;
     Integer rightEval;
 
+    private final TimerScheduler<Evaluator.Message> timers;
+
     private Evaluator(
             ActorContext<Message> context,
+            TimerScheduler<Evaluator.Message> timers,
             ActorRef<PrintAndEvaluate.Message> root,
             ActorRef<Evaluator.Message> cust,
             Expression expr,
-            position myPosition
-        ) {
+            position myPosition) {
         super(context);
         this.expr = expr;
+        this.timers = timers;
 
-        if(root != null) this.root = root;
-        if(cust != null) this.cust = cust;
+        if (root != null)
+            this.root = root;
+        if (cust != null)
+            this.cust = cust;
         this.myPosition = myPosition;
 
-        if(expr instanceof Expression.Val){
+        if (expr instanceof Expression.Val) {
             sendEvaluatorResult(((Expression.Val) expr).inner());
             return;
         }
@@ -65,10 +78,11 @@ public class Evaluator extends AbstractBehavior<Evaluator.Message> {
     }
 
     /*
-    * Erzeugt zwei Childaktoren, falls der erhaltene Ausdruck Add, Mul oder Sub ist
-    * */
-    private void createChildActors(Expression parent){
-        if (parent instanceof Expression.Val) throw new RuntimeException("Here only non primitive Expression!");
+     * Erzeugt zwei Childaktoren, falls der erhaltene Ausdruck Add, Mul oder Sub ist
+     */
+    private void createChildActors(Expression parent) {
+        if (parent instanceof Expression.Val)
+            throw new RuntimeException("Here only non primitive Expression!");
 
         Expression[] res = new Expression[2];
 
@@ -94,39 +108,47 @@ public class Evaluator extends AbstractBehavior<Evaluator.Message> {
     public Receive<Message> createReceive() {
         return newReceiveBuilder()
                 .onMessage(EvaluatorResult.class, this::onChildResult)
+                .onMessage(TimedMessage.class, this::onTimedSelfMessage)
                 .build();
     }
 
     /*
-    * Ermittelt, ob Parent PrintAndEvaluate oder ein anderer Evaluator ist und sendet dementsprechend die richtige Nachricht
-    * */
-    private void sendEvaluatorResult(int res){
-        if(myPosition == position.ROOT){
+     * Ermittelt, ob Parent PrintAndEvaluate oder ein anderer Evaluator ist und
+     * sendet dementsprechend die richtige Nachricht
+     */
+    private void sendEvaluatorResult(int res) {
+        if (myPosition == position.ROOT) {
             root.tell(new PrintAndEvaluate.EvaluatorResult(res));
         } else {
             cust.tell(new Evaluator.EvaluatorResult(res, myPosition));
         }
     }
 
+    private Behavior<Message> onTimedSelfMessage(TimedMessage msg) {
+        sendEvaluatorResult(msg.res);
+
+        return this;
+    }
+
     private Behavior<Message> onChildResult(EvaluatorResult child) {
-        if(child.myPosition == position.LEFT){
+        if (child.myPosition == position.LEFT) {
             leftEval = child.res;
         } else {
             rightEval = child.res;
         }
 
         // Die tatsächliche Berechnung, wenn beide Ergebnisse erhalten wurden
-        if(leftEval != null && rightEval != null){
-            //sleep for 1 sec...
+        if (leftEval != null && rightEval != null) {
 
             int res = 0;
-            switch (myOperation){
+            switch (myOperation) {
                 case ADD -> res = leftEval + rightEval;
                 case MUL -> res = leftEval * rightEval;
                 case SUB -> res = leftEval - rightEval;
             }
 
-            sendEvaluatorResult(res);
+            Message msg = new TimedMessage(res);
+            timers.startSingleTimer(msg, msg, Duration.ofSeconds(1));
         }
 
         return this;

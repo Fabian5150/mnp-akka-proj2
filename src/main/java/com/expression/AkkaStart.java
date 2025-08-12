@@ -10,6 +10,7 @@ public class AkkaStart {
 
         messageMain.tell(new PrintAndEvaluate.Create());
 
+                
         try {
             System.out.println(">>> Press ENTER to exit <<<");
             System.in.read();
@@ -19,4 +20,5 @@ public class AkkaStart {
         }
     }
 }
+
 

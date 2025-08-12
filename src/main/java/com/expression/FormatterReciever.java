@@ -15,7 +15,6 @@ public class FormatterReciever extends AbstractBehavior<FormatterCont.Message> {
         return Behaviors.setup(context -> new FormatterReciever(context, main));
     }
 
-
     private FormatterReciever(ActorContext<FormatterCont.Message> context, ActorRef<PrintAndEvaluate.Message> main) {
         super(context);
         this.mainSystem = main;
@@ -29,7 +28,7 @@ public class FormatterReciever extends AbstractBehavior<FormatterCont.Message> {
     }
 
     private Behavior<FormatterCont.Message> onExampleMessage(FormatterCont.Calc msg) {
-        //getContext().getLog().info("Got: {}",msg.val());
+        // getContext().getLog().info("Got: {}",msg.val());
         this.mainSystem.tell(new PrintAndEvaluate.FormatterResult(msg.val()));
         return this;
     }
